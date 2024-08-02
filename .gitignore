@@ -159,3 +159,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 silken-facet-431316-u8-e1b1f2890d70.json
+key.json
+amokey.py
