@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма ввода данных</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* Основные стили для страницы */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 600px; /* Устанавливаем максимальную ширину контейнера */
+            position: relative;
+        }
+
+        .admin-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .admin-button:hover {
+            background-color: #0056b3;
+        }
+
+        .card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 100%;
+    max-width: 500px; /* Устанавливаем максимальную ширину карточки */
+    box-sizing: border-box; /* Учитываем padding в ширину */
+    position: relative;
+    overflow-y: auto; /* Добавляем вертикальный скролл */
+    max-height: 80vh; /* Устанавливаем максимальную высоту карточки */
+}
+
+
+        .hidden {
+            display: none;
+        }
+
+        h1 {
+            margin: 0 0 20px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        button::after {
+            content: '→';
+            font-size: 16px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/admin/" class="admin-button">Ко всем аккаунтам</a>
+        <div class="card" id="step1">
+            <h1>Шаг 1: Основные данные</h1>
+            <form id="formStep1" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="table-link">Ссылка на таблицу</label>
+                    <input type="url" id="table-link" name="table-link" placeholder="Введите ссылку на таблицу" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Ссылка на crm</label>
+                    <input type="text" id="name" name="name" placeholder="Введите название" required>
+                </div>
+                <div class="form-group">
+                    <label for="token">Долгосрочный токен</label>
+                    <input type="text" id="token" name="token" placeholder="Введите долгосрочный токен" required>
+                </div>
+                <input type="hidden" id="csrf_token" name="csrfmiddlewaretoken" value="{% csrf_token %}">
+                <button type="button" onclick="nextStep()">Далее</button>
+            </form>
+        </div>
+
+        <div class="card hidden" id="step2">
+            <h1>Шаг 2: Дополнительные данные</h1>
+            <form id="formStep2" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Выберите кастомные поля сделок</label>
+                    <div class="checkbox-group" id="options1">
+                        <!-- Опции будут добавлены здесь динамически -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Выберите дополнительные операции из списка событий</label>
+                    <div class="checkbox-group" id="options2">
+                        <label><input type="checkbox" name="select2" value="entity_responsible_changed" checked> Ответственный изменен</label>
+                        <label><input type="checkbox" name="select2" value="incoming_chat_message" checked> Входящее сообщение</label>
+                        <label><input type="checkbox" name="select2" value="outgoing_chat_message" checked> Исходящее сообщение</label>
+                        <label><input type="checkbox" name="select2" value="contact_added" checked> Новый контакт</label>
+                        <label><input type="checkbox" name="select2" value="incoming_call" checked> Входящий звонок</label>
+                        <label><input type="checkbox" name="select2" value="outgoing_call" checked> Исходящий звонок</label>
+                        <label><input type="checkbox" name="select2" value="lead_added" checked> Новая сделка</label>
+                        <label><input type="checkbox" name="select2" value="lead_status_changed" checked> Изменение этапа продажи</label>
+                        <label><input type="checkbox" name="select2" value="task_completed" checked> Завершение задачи</label>
+                        <label><input type="checkbox" name="select2" value="task_added" checked> Новая задача</label>
+                        <label><input type="checkbox" name="select2" value="lead_deleted"> Сделка удалена</label>
+                        <label><input type="checkbox" name="select2" value="lead_restored"> Сделка восстановлена</label>
+                        <label><input type="checkbox" name="select2" value="lead_linked"> Прикрепление сделки</label>
+                        <label><input type="checkbox" name="select2" value="lead_unlinked"> Открепление сделки</label>
+                        <label><input type="checkbox" name="select2" value="contact_deleted"> Контакт удален</label>
+                        <label><input type="checkbox" name="select2" value="contact_restored"> Контакт восстановлен</label>
+                        <label><input type="checkbox" name="select2" value="contact_linked"> Прикрепление контакта</label>
+                        <label><input type="checkbox" name="select2" value="contact_unlinked"> Открепление контакта</label>
+                        <label><input type="checkbox" name="select2" value="company_added"> Новая компания</label>
+                        <label><input type="checkbox" name="select2" value="company_deleted"> Компания удалена</label>
+                        <label><input type="checkbox" name="select2" value="company_restored"> Компания восстановлена</label>
+                        <label><input type="checkbox" name="select2" value="company_linked"> Прикрепление компании</label>
+                        <label><input type="checkbox" name="select2" value="company_unlinked"> Открепление компании</label>
+                        <label><input type="checkbox" name="select2" value="customer_added"> Новый покупатель</label>
+                        <label><input type="checkbox" name="select2" value="customer_deleted"> Покупатель удален</label>
+                        <label><input type="checkbox" name="select2" value="customer_status_changed"> Изменение этапа покупателя</label>
+                        <label><input type="checkbox" name="select2" value="customer_linked"> Прикрепление покупателя</label>
+                        <label><input type="checkbox" name="select2" value="customer_unlinked"> Открепление покупателя</label>
+                        <label><input type="checkbox" name="select2" value="task_deleted"> Задача удалена</label>
+                        <label><input type="checkbox" name="select2" value="task_type_changed"> Изменение типа задачи</label>
+                        <label><input type="checkbox" name="select2" value="task_text_changed"> Изменение текста задачи</label>
+                        <label><input type="checkbox" name="select2" value="task_deadline_changed"> Изменение даты исполнения задачи</label>
+                        <label><input type="checkbox" name="select2" value="task_result_added"> Результат по задаче</label>
+                        <label><input type="checkbox" name="select2" value="entity_direct_message"> Сообщение внутреннего чата</label>
+                        <label><input type="checkbox" name="select2" value="incoming_sms"> Входящее SMS</label>
+                        <label><input type="checkbox" name="select2" value="outgoing_sms"> Исходящее SMS</label>
+                        <label><input type="checkbox" name="select2" value="entity_tag_added"> Теги добавлены</label>
+                        <label><input type="checkbox" name="select2" value="entity_tag_deleted"> Теги убраны</label>
+                        <label><input type="checkbox" name="select2" value="entity_linked"> Прикрепление</label>
+                        <label><input type="checkbox" name="select2" value="entity_unlinked"> Открепление</label>
+                        <label><input type="checkbox" name="select2" value="sale_field_changed"> Изменение поля “Бюджет”</label>
+                        <label><input type="checkbox" name="select2" value="name_field_changed"> Изменение поля “Название”</label>
+                        <label><input type="checkbox" name="select2" value="ltv_field_changed"> Сумма покупок</label>
+                        <label><input type="checkbox" name="select2" value="custom_field_value_changed"> Изменение поля</label>
+                        <label><input type="checkbox" name="select2" value="robot_replied"> Ответ робота</label>
+                        <label><input type="checkbox" name="select2" value="intent_identified"> Тема вопроса определена</label>
+                        <label><input type="checkbox" name="select2" value="nps_rate_added"> Новая оценка NPS</label>
+                        <label><input type="checkbox" name="select2" value="link_followed"> Переход по ссылке</label>
+                        <label><input type="checkbox" name="select2" value="transaction_added"> Добавлена покупка</label>
+                        <label><input type="checkbox" name="select2" value="common_note_added"> Новое примечание</label>
+                        <label><input type="checkbox" name="select2" value="common_note_deleted"> Примечание удалено</label>
+                        <label><input type="checkbox" name="select2" value="attachment_note_added"> Добавлен новый файл</label>
+                        <label><input type="checkbox" name="select2" value="targeting_in_note_added"> Добавление в ретаргетинг</label>
+                        <label><input type="checkbox" name="select2" value="targeting_out_note_added"> Удаление из ретаргетинга</label>
+                        <label><input type="checkbox" name="select2" value="geo_note_added"> Новое примечание с гео-меткой</label>
+                        <label><input type="checkbox" name="select2" value="service_note_added"> Новое системное примечание</label>
+                        <label><input type="checkbox" name="select2" value="site_visit_note_added"> Заход на сайт</label>
+                        <label><input type="checkbox" name="select2" value="message_to_cashier_note_added"> LifePay: Сообщение кассиру</label>
+                        <label><input type="checkbox" name="select2" value="key_action_completed"> Ключевое действие</label>
+                        <label><input type="checkbox" name="select2" value="entity_merged"> Выполнено объединение</label>
+                                            </div>
+                </div>
+                <input type="hidden" id="csrf_token" name="csrfmiddlewaretoken" value="{% csrf_token %}">
+                <button type="button" onclick="previousStep()">Назад</button>
+                <button type="button" onclick="submitForm()">Отправить</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Получаем CSRF-токен из HTML
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+        let formData = {};
+
+        function nextStep() {
+            const name = document.getElementById('name').value;
+            const tableLink = document.getElementById('table-link').value;
+            const token = document.getElementById('token').value;
+
+            if (name && token) {
+                formData = {
+                    name: name,
+                    google_link: tableLink,
+                    long_term_token: token
+                };
+
+                // Отправляем GET-запрос для получения опций
+                axios.get(`http://127.0.0.1:8000/get_options/`, {
+                    params: {
+                        name: name,
+                        long_term_token: token
+                    },
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
+                })
+                .then(response => {
+                    // Обновляем опции в первом выборе
+                    const options1Container = document.getElementById('options1');
+                    options1Container.innerHTML = ''; // Очищаем предыдущие опции
+
+                    response.data.options.forEach(option => {
+                        const label = document.createElement('label');
+                        label.innerHTML = `<input type="checkbox" name="select1" value="${option}"> ${option}`;
+                        options1Container.appendChild(label);
+                    });
+
+                    // Переходим к следующему шагу
+                    document.getElementById('step1').classList.add('hidden');
+                    document.getElementById('step2').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Ошибка получения опций:', error);
+                    alert('Ошибка получения опций. Попробуйте еще раз.');
+                });
+            } else {
+                alert('Пожалуйста, заполните все поля!');
+            }
+        }
+
+        function previousStep() {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+        }
+
+        function submitForm() {
+            const select1 = Array.from(document.querySelectorAll('input[name="select1"]:checked'))
+                .map(checkbox => checkbox.value)
+                .join('|');
+            const select2 = Array.from(document.querySelectorAll('input[name="select2"]:checked'))
+                .map(checkbox => checkbox.value)
+                .join('|');
+
+            if (select2) {
+                formData.lead_filter = select1;
+                formData.event_filter = select2;
+
+                axios.post('http://127.0.0.1:8000/create_amo/', formData, {
+                    headers: {
+                        'X-CSRFToken': csrfToken // Правильное имя заголовка
+                    }
+                })
+                .then(response => {
+                    console.log('Форма отправлена:', response.data);
+                    window.location.reload();
+                    alert('Форма успешно отправлена!');
+                })
+                .catch(error => {
+                    console.error('Ошибка отправки формы:', error);
+                    alert('Ошибка отправки формы. Попробуйте еще раз.');
+                });
+            } else {
+                alert('Пожалуйста, заполните все поля!');
+            }
+        }
+    </script>
+</body>
+</html>
